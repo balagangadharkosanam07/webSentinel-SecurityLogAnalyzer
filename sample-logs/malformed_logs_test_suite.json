@@ -1,0 +1,79 @@
+[
+  {
+    "_test_case": "REJECT: Missing required timestamp field",
+    "expected_error": "timestamp: Required",
+    "event_type": "login_failed",
+    "actor_id": null,
+    "actor_role": null,
+    "source_ip": "192.0.2.1",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 401,
+    "request_id": "req-err-001",
+    "source_app": "attendance-portal",
+    "message": "Missing timestamp"
+  },
+  {
+    "_test_case": "REJECT: Invalid event_type enumeration",
+    "expected_error": "event_type: Invalid enum value",
+    "timestamp": "2026-10-09T10:00:00Z",
+    "event_type": "database_hacked_random_string",
+    "actor_id": null,
+    "actor_role": null,
+    "source_ip": "192.0.2.1",
+    "method": "GET",
+    "endpoint": "/api/users",
+    "status_code": 200,
+    "request_id": "req-err-002",
+    "source_app": "attendance-portal",
+    "message": "Invalid event type test"
+  },
+  {
+    "_test_case": "REJECT: Invalid IP format",
+    "expected_error": "source_ip: Must be valid IPv4 or IPv6 address",
+    "timestamp": "2026-10-09T10:00:00Z",
+    "event_type": "login_failed",
+    "actor_id": null,
+    "actor_role": null,
+    "source_ip": "not-a-valid-ip-address",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 401,
+    "request_id": "req-err-003",
+    "source_app": "attendance-portal",
+    "message": "Invalid IP address"
+  },
+  {
+    "_test_case": "REJECT: Out-of-bounds HTTP status code",
+    "expected_error": "status_code: Must be <= 599",
+    "timestamp": "2026-10-09T10:00:00Z",
+    "event_type": "app_error",
+    "actor_id": null,
+    "actor_role": null,
+    "source_ip": "192.0.2.1",
+    "method": "GET",
+    "endpoint": "/api/test",
+    "status_code": 9999,
+    "request_id": "req-err-004",
+    "source_app": "attendance-portal",
+    "message": "Illegal status code"
+  },
+  {
+    "_test_case": "REJECT: Violation of privacy contract (plaintext password payload detected)",
+    "expected_error": "metadata: Contains forbidden secret field 'password'",
+    "timestamp": "2026-10-09T10:00:00Z",
+    "event_type": "login_failed",
+    "actor_id": null,
+    "actor_role": null,
+    "source_ip": "192.0.2.1",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 401,
+    "request_id": "req-err-005",
+    "source_app": "attendance-portal",
+    "message": "Authentication failed",
+    "metadata": {
+      "password": "SuperSecretPlainPassword123!"
+    }
+  }
+]

@@ -1,0 +1,28 @@
+import dotenv from 'dotenv';
+import { z } from 'zod';
+
+dotenv.config();
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().positive().default(5000),
+  DATABASE_URL: z.string().min(1),
+  JWT_SECRET: z.string().min(16).default('dev-jwt-super-secret-key-for-attendance-portal-2026'),
+  WEBSENTINEL_INGESTION_URL: z.string().url().default('http://localhost:4000/api/logs/import'),
+  WEBSENTINEL_API_KEY: z.string().min(1).default('dev-sample-ingestion-key-change-in-prod'),
+});
+
+const parseEnv = () => {
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    console.error('❌ Invalid Attendance Portal environment variables:');
+    result.error.issues.forEach((issue) => {
+      console.error(`   - ${issue.path.join('.')}: ${issue.message}`);
+    });
+    process.exit(1);
+  }
+  return result.data;
+};
+
+export const env = parseEnv();
+export type Environment = z.infer<typeof envSchema>;

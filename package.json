@@ -1,0 +1,45 @@
+{
+  "name": "websentinel-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "client",
+    "server",
+    "attendance-portal/server",
+    "attendance-portal/client"
+  ],
+  "scripts": {
+    "client:dev": "npm run dev --workspace=client",
+    "client:build": "npm run build --workspace=client",
+    "server:dev": "npm run dev --workspace=server",
+    "server:build": "npm run build --workspace=server",
+    "server:test": "npm run test --workspace=server",
+    "portal:server:dev": "npm run dev --workspace=attendance-portal/server",
+    "portal:server:test": "npm run test --workspace=attendance-portal/server",
+    "portal:server:seed": "npm run seed --workspace=attendance-portal/server",
+    "portal:client:dev": "npm run dev --workspace=attendance-portal/client",
+    "portal:client:build": "npm run build --workspace=attendance-portal/client",
+    "dev:all": "concurrently -n \"soc-api,soc-ui,portal-api,portal-ui\" -c \"cyan,blue,magenta,green\" \"npm run server:dev\" \"npm run client:dev\" \"npm run portal:server:dev\" \"npm run portal:client:dev\"",
+    "simulate:attacks": "tsx attendance-portal/server/src/scripts/simulateAttacks.ts",
+    "db:check": "npm run db:check --workspace=server",
+    "db:generate": "npm run db:generate --workspace=server",
+    "db:migrate": "npm run db:migrate --workspace=server",
+    "db:seed": "npm run db:seed --workspace=server"
+  },
+  "keywords": [
+    "security",
+    "soc",
+    "log-analysis",
+    "threat-detection",
+    "mern",
+    "pern"
+  ],
+  "author": "WebSentinel Security Team",
+  "license": "ISC",
+  "dependencies": {
+    "drizzle-orm": "^0.45.4"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

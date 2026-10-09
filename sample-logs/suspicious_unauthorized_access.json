@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "2026-10-09T08:20:10Z",
+    "event_type": "access_denied",
+    "actor_id": "usr-std-3021",
+    "actor_role": "student",
+    "source_ip": "203.0.113.88",
+    "method": "GET",
+    "endpoint": "/api/admin/system/audit-logs",
+    "status_code": 403,
+    "request_id": "req-authz-001",
+    "source_app": "attendance-portal",
+    "message": "Authorization failure: Role student lacks permission system:audit:read",
+    "duration_ms": 18,
+    "metadata": {
+      "required_permission": "system:audit:read",
+      "user_role": "student"
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:20:18Z",
+    "event_type": "access_denied",
+    "actor_id": "usr-std-3021",
+    "actor_role": "student",
+    "source_ip": "203.0.113.88",
+    "method": "GET",
+    "endpoint": "/api/admin/users",
+    "status_code": 403,
+    "request_id": "req-authz-002",
+    "source_app": "attendance-portal",
+    "message": "Authorization failure: Role student lacks permission users:list",
+    "duration_ms": 16,
+    "metadata": {
+      "required_permission": "users:list",
+      "user_role": "student"
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:21:05Z",
+    "event_type": "access_denied",
+    "actor_id": "usr-tch-1008",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.18",
+    "method": "DELETE",
+    "endpoint": "/api/attendance/classes/CS101",
+    "status_code": 403,
+    "request_id": "req-authz-003",
+    "source_app": "attendance-portal",
+    "message": "Authorization failure: Teachers cannot delete classes without department chair authorization",
+    "duration_ms": 20,
+    "metadata": {
+      "required_role": "admin"
+    },
+    "is_synthetic": true
+  }
+]

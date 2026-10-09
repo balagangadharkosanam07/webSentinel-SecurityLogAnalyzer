@@ -1,0 +1,135 @@
+[
+  {
+    "timestamp": "2026-10-09T08:00:15Z",
+    "event_type": "login_success",
+    "actor_id": "usr-tch-1002",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.12",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 200,
+    "request_id": "req-norm-001",
+    "source_app": "attendance-portal",
+    "message": "Teacher usr-tch-1002 logged in successfully",
+    "duration_ms": 52,
+    "metadata": {
+      "session_expiry_hrs": 8,
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:02:10Z",
+    "event_type": "login_success",
+    "actor_id": "usr-std-5011",
+    "actor_role": "student",
+    "source_ip": "10.0.8.22",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 200,
+    "request_id": "req-norm-002",
+    "source_app": "attendance-portal",
+    "message": "Student usr-std-5011 logged in successfully",
+    "duration_ms": 48,
+    "metadata": {
+      "session_expiry_hrs": 4,
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4)"
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:15:30Z",
+    "event_type": "attendance_mark",
+    "actor_id": "usr-tch-1002",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.12",
+    "method": "POST",
+    "endpoint": "/api/attendance/classes/CS101/sessions",
+    "status_code": 201,
+    "request_id": "req-norm-003",
+    "source_app": "attendance-portal",
+    "message": "Attendance recorded for CS101 session 12: 38 students marked present",
+    "duration_ms": 115,
+    "metadata": {
+      "class_id": "CS101",
+      "session_id": "ses-12",
+      "present_count": 38,
+      "absent_count": 2
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:20:00Z",
+    "event_type": "login_success",
+    "actor_id": "usr-tch-1008",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.18",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 200,
+    "request_id": "req-norm-004",
+    "source_app": "attendance-portal",
+    "message": "Teacher usr-tch-1008 logged in successfully",
+    "duration_ms": 50,
+    "metadata": {
+      "session_expiry_hrs": 8
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:25:40Z",
+    "event_type": "attendance_mark",
+    "actor_id": "usr-tch-1008",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.18",
+    "method": "POST",
+    "endpoint": "/api/attendance/classes/MATH201/sessions",
+    "status_code": 201,
+    "request_id": "req-norm-005",
+    "source_app": "attendance-portal",
+    "message": "Attendance recorded for MATH201 session 14: 42 students marked present",
+    "duration_ms": 130,
+    "metadata": {
+      "class_id": "MATH201",
+      "session_id": "ses-14",
+      "present_count": 42
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:30:12Z",
+    "event_type": "not_found_probe",
+    "actor_id": "usr-std-5011",
+    "actor_role": "student",
+    "source_ip": "10.0.8.22",
+    "method": "GET",
+    "endpoint": "/api/dashboard/profile-old",
+    "status_code": 404,
+    "request_id": "req-norm-006",
+    "source_app": "attendance-portal",
+    "message": "Route not found: deprecated endpoint requested by cached client bookmark",
+    "duration_ms": 14,
+    "metadata": {
+      "deprecated_route": true
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:45:00Z",
+    "event_type": "login_success",
+    "actor_id": "usr-adm-9901",
+    "actor_role": "admin",
+    "source_ip": "10.0.1.5",
+    "method": "POST",
+    "endpoint": "/api/auth/login",
+    "status_code": 200,
+    "request_id": "req-norm-007",
+    "source_app": "attendance-portal",
+    "message": "Administrator usr-adm-9901 authenticated via internal management subnet",
+    "duration_ms": 65,
+    "metadata": {
+      "mfa_verified": true
+    },
+    "is_synthetic": true
+  }
+]

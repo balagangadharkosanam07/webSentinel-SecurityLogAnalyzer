@@ -1,0 +1,43 @@
+[
+  {
+    "timestamp": "2026-10-09T08:35:12Z",
+    "event_type": "attendance_modify",
+    "actor_id": "usr-tch-1002",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.12",
+    "method": "PATCH",
+    "endpoint": "/api/attendance/records/bulk-update",
+    "status_code": 200,
+    "request_id": "req-tamp-001",
+    "source_app": "attendance-portal",
+    "message": "Bulk attendance alteration: modified 14 historical attendance records for prior semester",
+    "duration_ms": 240,
+    "metadata": {
+      "modified_record_count": 14,
+      "max_age_days": 45,
+      "policy_allowed_window_days": 7,
+      "affected_student_ids": ["usr-std-100", "usr-std-101", "usr-std-102"]
+    },
+    "is_synthetic": true
+  },
+  {
+    "timestamp": "2026-10-09T08:36:00Z",
+    "event_type": "attendance_modify",
+    "actor_id": "usr-tch-1002",
+    "actor_role": "teacher",
+    "source_ip": "10.0.5.12",
+    "method": "PATCH",
+    "endpoint": "/api/attendance/records/bulk-update",
+    "status_code": 200,
+    "request_id": "req-tamp-002",
+    "source_app": "attendance-portal",
+    "message": "Bulk attendance alteration: second batch of 18 historical records modified",
+    "duration_ms": 280,
+    "metadata": {
+      "modified_record_count": 18,
+      "max_age_days": 60,
+      "cumulative_window_edits": 32
+    },
+    "is_synthetic": true
+  }
+]

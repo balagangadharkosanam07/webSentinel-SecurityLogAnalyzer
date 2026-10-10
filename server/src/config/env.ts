@@ -6,9 +6,9 @@ import { z } from 'zod';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables reliably whether running from monorepo root or package directory
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+// Load package-specific .env first, then root .env
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config();
 
 const envSchema = z.object({

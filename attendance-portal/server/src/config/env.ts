@@ -6,9 +6,9 @@ import { z } from 'zod';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables reliably whether running from monorepo root or package directory
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+// Load package-specific .env first, then root .env
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 dotenv.config();
 
 const envSchema = z.object({
@@ -21,7 +21,11 @@ const envSchema = z.object({
 });
 
 const parseEnv = () => {
-  const result = envSchema.safeParse(process.env);
+  const rawPort = process.env.PORTAL_PORT || (process.env.PORT && process.env.PORT !== '4000' ? process.env.PORT : 5000);
+  const result = envSchema.safeParse({
+    ...process.env,
+    PORT: rawPort,
+  });
   if (!result.success) {
     console.error('❌ Invalid Attendance Portal environment variables:');
     result.error.issues.forEach((issue) => {

@@ -73,7 +73,7 @@ function mapEventToTimelinePhase(evt: LogEventModel): TimelineStep['phase'] {
   if (evt.eventType === 'attendance_modify' || evt.endpoint.includes('/attendance')) {
     return 'Impact';
   }
-  if (evt.statusCode === 403 || evt.eventType === 'permission_denied') {
+  if (evt.statusCode === 403 || evt.eventType === 'permission_denied' || evt.eventType === 'access_denied') {
     return 'Privilege Escalation';
   }
   if (evt.eventType === 'login_success' || (evt.statusCode === 200 && evt.endpoint.includes('/login'))) {

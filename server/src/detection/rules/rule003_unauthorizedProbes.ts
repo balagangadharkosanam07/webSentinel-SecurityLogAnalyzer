@@ -9,9 +9,9 @@ export const rule003UnauthorizedProbes: DetectionRuleEvaluator = {
   async evaluate(context: RuleEvaluationContext): Promise<AlertCandidate[]> {
     const candidates: AlertCandidate[] = [];
 
-    // Filter 403 forbidden or permission_denied events
+    // Filter 403 forbidden or access_denied / permission_denied events
     const unauthorizedEvents = context.events.filter(
-      (e) => e.statusCode === 403 || e.eventType === 'permission_denied'
+      (e) => e.statusCode === 403 || e.eventType === 'permission_denied' || e.eventType === 'access_denied'
     );
 
     // Group by source IP

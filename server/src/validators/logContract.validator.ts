@@ -16,6 +16,7 @@ export const LogEventTypeSchema = z.enum([
   'login_success',
   'login_failed',
   'access_denied',
+  'permission_denied',
   'attendance_mark',
   'attendance_modify',
   'rate_limit_exceeded',
@@ -23,6 +24,7 @@ export const LogEventTypeSchema = z.enum([
   'sql_injection_attempt',
   'xss_attempt',
   'app_error',
+  'api_request',
 ]);
 
 export const ActorRoleSchema = z.enum(['admin', 'teacher', 'student', 'system']).nullable();
@@ -181,7 +183,10 @@ export function validateAndNormalizeRecord(raw: unknown): ValidationOutcome {
     durationMs: data.duration_ms || null,
     metadata: sanitized,
     dedupId,
-    isSuspicious: data.is_suspicious ?? false,
+    isSuspicious:
+      data.is_suspicious !== undefined
+        ? data.is_suspicious
+        : Boolean((data.metadata as any)?.is_suspicious) || false,
     isSynthetic: data.is_synthetic ?? false,
   };
 

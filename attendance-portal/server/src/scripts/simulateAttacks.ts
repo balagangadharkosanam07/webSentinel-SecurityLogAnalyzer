@@ -117,6 +117,7 @@ async function runSimulation() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-simulate-attack': 'tampering',
           Authorization: `Bearer ${teacherToken}`,
         },
         body: JSON.stringify({

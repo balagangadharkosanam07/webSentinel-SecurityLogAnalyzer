@@ -114,9 +114,12 @@ export function classifySecurityEvent(
     statusCode === 404 &&
     (lowerPath.includes('.env') ||
       lowerPath.includes('wp-login') ||
+      lowerPath.includes('wp-admin') ||
       lowerPath.includes('phpmyadmin') ||
       lowerPath.includes('.git') ||
-      lowerPath.includes('actuator'))
+      lowerPath.includes('actuator') ||
+      lowerPath.includes('config.json') ||
+      lowerPath.includes('admin.php'))
   ) {
     return {
       eventType: 'not_found_probe',
@@ -125,20 +128,27 @@ export function classifySecurityEvent(
     };
   }
 
-  // 4. Authentication Events
-  if (lowerPath.includes('/auth/login') || lowerPath.includes('/session')) {
-    if (statusCode === 200 || statusCode === 201) {
+  // 4. Attendance Operations & Tampering (Prioritized over generic 403/POST checks)
+  if (lowerPath.includes('/attendance')) {
+    if (
+      lowerPath.includes('bulk') ||
+      lowerPath.includes('tamper') ||
+      lowerPath.includes('records') ||
+      method === 'PATCH' ||
+      method === 'PUT' ||
+      method === 'DELETE'
+    ) {
       return {
-        eventType: 'login_success',
-        isSuspicious: false,
-        message: 'Successful user authentication transaction',
+        eventType: 'attendance_modify',
+        isSuspicious: true,
+        message: `Suspicious attendance records modification or bulk tampering requested via ${method} ${path}`,
       };
     }
-    if (statusCode === 401) {
+    if (method === 'POST') {
       return {
-        eventType: 'login_failed',
-        isSuspicious: true,
-        message: 'Failed login attempt: Invalid authentication credentials',
+        eventType: 'attendance_mark',
+        isSuspicious: false,
+        message: `New attendance session records committed on ${path}`,
       };
     }
   }
@@ -152,20 +162,20 @@ export function classifySecurityEvent(
     };
   }
 
-  // 6. Attendance Operations
-  if (lowerPath.includes('/attendance')) {
-    if (method === 'PATCH' || method === 'PUT') {
+  // 6. Authentication Events
+  if (lowerPath.includes('/auth/login') || lowerPath.includes('/session')) {
+    if (statusCode === 200 || statusCode === 201) {
       return {
-        eventType: 'attendance_modify',
-        isSuspicious: statusCode >= 400 || lowerPath.includes('bulk'),
-        message: `Attendance records modification requested via ${method} ${path}`,
+        eventType: 'login_success',
+        isSuspicious: false,
+        message: 'Successful user authentication transaction',
       };
     }
-    if (method === 'POST') {
+    if (statusCode === 401) {
       return {
-        eventType: 'attendance_mark',
-        isSuspicious: false,
-        message: `New attendance session records committed on ${path}`,
+        eventType: 'login_failed',
+        isSuspicious: true,
+        message: 'Failed login attempt: Invalid authentication credentials',
       };
     }
   }
@@ -234,11 +244,15 @@ export function createWebSentinelLogger(options: WebSentinelLoggerOptions = {}) 
     // Capture response completion without altering downstream data
     res.on('finish', () => {
       const durationMs = Date.now() - startTime;
-      const clientIp =
+      let clientIp =
         (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
         req.ip ||
         req.socket.remoteAddress ||
         '127.0.0.1';
+
+      if (clientIp === '::1' || clientIp === '::ffff:127.0.0.1') {
+        clientIp = '127.0.0.1';
+      }
 
       const sanitizedBody = sanitizeLogPayload(req.body || {});
       const bodyString = typeof req.body === 'object' ? JSON.stringify(sanitizedBody) : String(req.body || '');
@@ -263,6 +277,7 @@ export function createWebSentinelLogger(options: WebSentinelLoggerOptions = {}) 
         source_app: sourceApp,
         message: classification.message,
         duration_ms: durationMs,
+        is_suspicious: classification.isSuspicious,
         metadata: {
           client_ip: clientIp,
           user_agent: req.headers['user-agent'] || 'unknown',
@@ -273,7 +288,7 @@ export function createWebSentinelLogger(options: WebSentinelLoggerOptions = {}) 
 
       buffer.push(logRecord);
 
-      if (buffer.length >= batchSize) {
+      if (buffer.length >= batchSize || classification.isSuspicious) {
         flush();
       }
     });

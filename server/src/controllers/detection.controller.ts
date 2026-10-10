@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
 import { detectionEngine } from '../detection/engine.js';
+import { correlationService } from '../services/correlation.service.js';
 import { alertsRepository, AlertQueryFilters } from '../repositories/alerts.repository.js';
 import { detectionRulesRepository } from '../repositories/detectionRules.repository.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { logger } from '../utils/logger.js';
 
 export async function runDetectionHandler(req: Request, res: Response): Promise<Response> {
   const limit = req.body?.limit ? Number(req.body.limit) : 500;
   const result = await detectionEngine.run({ limit });
+  await correlationService.correlateAlerts().catch((err) => {
+    logger.error('Correlation after detection failed:', err);
+  });
 
   return sendSuccess(res, result, {
     eventsEvaluated: result.totalEventsEvaluated,

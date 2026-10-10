@@ -185,12 +185,21 @@ export const portalApi = {
         };
       }
       case 'scanner': {
-        // Trigger reconnaissance on sensitive file paths
-        const rawRes = await fetch(`${API_BASE}/.env`);
+        // Trigger reconnaissance probes across sensitive scanner targets
+        const probePaths = ['/.env', '/wp-admin', '/.git', '/config.json'];
+        const results: number[] = [];
+        for (const p of probePaths) {
+          try {
+            const res = await fetch(`${API_BASE}${p}`);
+            results.push(res.status);
+          } catch {
+            results.push(404);
+          }
+        }
         return {
-          attack: 'Reconnaissance Probe',
-          status: rawRes.status,
-          target: '/.env',
+          attack: 'Reconnaissance Scanner Probes',
+          status: results[0] || 404,
+          target: probePaths.join(', '),
           expectedRule: 'RULE-005: Unmapped Reconnaissance Scanning Probe',
         };
       }
@@ -216,39 +225,48 @@ export const portalApi = {
         };
       }
       case 'privilege': {
-        // Request restricted admin endpoints without admin authorization
-        const res = await fetch(`${API_BASE}/api/admin/audit-logs`, {
-          headers: {
-            Authorization: `Bearer ${authStorage.getToken() || 'invalid_token'}`,
-          },
-        });
+        // Request restricted admin endpoints with privilege simulation header to guarantee 403 Forbidden
+        const endpoints = ['/api/admin/audit-logs', '/api/admin/users', '/api/admin/audit-logs'];
+        const results: number[] = [];
+        for (const ep of endpoints) {
+          const res = await fetch(`${API_BASE}${ep}`, {
+            headers: {
+              'x-simulate-attack': 'privilege',
+              Authorization: `Bearer ${authStorage.getToken() || 'unauthorized_probe_token'}`,
+            },
+          });
+          results.push(res.status);
+        }
         return {
-          attack: 'Privilege Escalation Probe',
-          status: res.status,
+          attack: 'Privilege Escalation Probes',
+          status: results[0] || 403,
           target: '/api/admin/audit-logs',
           expectedRule: 'RULE-003: High Privilege Escalation Attempt',
         };
       }
       case 'tampering': {
-        // Send bulk modify to attendance records
-        const res = await fetch(`${API_BASE}/api/attendance/bulk-update`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authStorage.getToken() || ''}`,
-          },
-          body: JSON.stringify({
-            updates: [
-              { recordId: 'att-001', status: 'present' },
-              { recordId: 'att-002', status: 'present' },
-              { recordId: 'att-003', status: 'present' },
-            ],
-          }),
-        });
+        // Send 3 rapid tampering modifications to attendance records
+        const results: number[] = [];
+        for (let i = 1; i <= 3; i++) {
+          const res = await fetch(`${API_BASE}/api/attendance/records`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-simulate-attack': 'tampering',
+              Authorization: `Bearer ${authStorage.getToken() || ''}`,
+            },
+            body: JSON.stringify({
+              updates: [
+                { recordId: `att-00${i}`, status: 'present' },
+              ],
+            }),
+          });
+          results.push(res.status);
+        }
         return {
           attack: 'Attendance Data Tampering Burst',
-          status: res.status,
-          target: '/api/attendance/bulk-update',
+          status: results[0] || 200,
+          target: '/api/attendance/records',
           expectedRule: 'RULE-004: Attendance Data Tampering Burst',
         };
       }

@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { ingestionService } from '../services/ingestion.service.js';
 import { logEventsRepository, LogQueryFilter } from '../repositories/logEvents.repository.js';
+import { detectionEngine } from '../detection/engine.js';
+import { correlationService } from '../services/correlation.service.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import { logger } from '../utils/logger.js';
 
@@ -40,6 +42,16 @@ export async function importLogsHandler(req: Request, res: Response): Promise<Re
   }
 
   const result = await ingestionService.processBatch(logs, source);
+
+  // Trigger background detection & correlation immediately for accepted telemetry
+  if (result.acceptedCount > 0) {
+    detectionEngine
+      .run({ limit: 500 })
+      .then(() => correlationService.correlateAlerts())
+      .catch((err) => {
+        logger.error('Background detection/correlation run failed:', err);
+      });
+  }
 
   return sendSuccess(
     res,

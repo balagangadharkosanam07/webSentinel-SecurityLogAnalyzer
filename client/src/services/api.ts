@@ -216,12 +216,49 @@ export interface IncidentCorrelateResult {
   incidents: DbIncident[];
 }
 
+function getApiBase(): string {
+  const envBase = ((import.meta as any).env?.VITE_API_URL || '').trim();
+  return envBase.replace(/\/$/, '');
+}
+
+export const API_BASE = getApiBase();
+
+export const ATTENDANCE_PORTAL_URL =
+  (import.meta as any).env?.VITE_PORTAL_URL || 'http://localhost:3001';
+
+async function parseResponseJson<T>(res: Response, endpoint: string): Promise<ApiResponse<T>> {
+  const text = await res.text();
+  let json: ApiResponse<T>;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    if (text.includes('<!doctype html>') || text.includes('<html')) {
+      throw new Error(
+        `WebSentinel API at '${endpoint}' returned an HTML page (Status ${res.status}). The backend service may still be waking up from sleep; please wait 30 seconds and refresh.`
+      );
+    }
+    throw new Error(`Server returned unexpected non-JSON response from ${endpoint} (Status ${res.status}): ${text.slice(0, 100)}`);
+  }
+  return json;
+}
+
+const fetchApi = async (url: string, init?: RequestInit): Promise<Response> => {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  try {
+    return await fetch(fullUrl, init);
+  } catch {
+    throw new Error(
+      `Failed to connect to WebSentinel API at ${fullUrl}. Please check your connection or wait 30 seconds if the free server is waking up.`
+    );
+  }
+};
+
 export const api = {
   /**
    * Dispatches a batch of log records to the backend ingestion pipeline (Stages 1-7)
    */
   async importLogs(logs: unknown[], source = 'synthetic-dashboard-import'): Promise<ApiResponse<IngestionBatchResult>> {
-    const res = await fetch('/api/logs/import', {
+    const res = await fetchApi('/api/logs/import', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -234,7 +271,7 @@ export const api = {
       }),
     });
 
-    const json = (await res.json()) as ApiResponse<IngestionBatchResult>;
+    const json = await parseResponseJson<IngestionBatchResult>(res, '/api/logs/import');
     if (!res.ok && !json.data) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to import logs`);
     }
@@ -245,11 +282,11 @@ export const api = {
    * Triggers the server to ingest all 5 synthetic attack datasets into Neon DB
    */
   async seedAllDatasets(): Promise<ApiResponse<SeedAllResponse>> {
-    const res = await fetch('/api/logs/seed-all', {
+    const res = await fetchApi('/api/logs/seed-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
-    const json = (await res.json()) as ApiResponse<SeedAllResponse>;
+    const json = await parseResponseJson<SeedAllResponse>(res, '/api/logs/seed-all');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to seed datasets`);
     }
@@ -260,8 +297,8 @@ export const api = {
    * Retrieves recent audit records of ingestion batches from Neon PostgreSQL
    */
   async getBatches(limit = 10): Promise<ApiResponse<IngestionBatchRecord[]>> {
-    const res = await fetch(`/api/logs/batches?limit=${limit}`);
-    const json = (await res.json()) as ApiResponse<IngestionBatchRecord[]>;
+    const res = await fetchApi(`/api/logs/batches?limit=${limit}`);
+    const json = await parseResponseJson<IngestionBatchRecord[]>(res, '/api/logs/batches');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch batches`);
     }
@@ -285,8 +322,8 @@ export const api = {
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
 
-    const res = await fetch(`/api/logs?${query.toString()}`);
-    const json = (await res.json()) as ApiResponse<DbLogEvent[]>;
+    const res = await fetchApi(`/api/logs?${query.toString()}`);
+    const json = await parseResponseJson<DbLogEvent[]>(res, '/api/logs');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch logs`);
     }
@@ -297,8 +334,8 @@ export const api = {
    * Retrieves distinct filter options (IPs, event types, counts) directly from Neon DB
    */
   async getLogMetadata(): Promise<ApiResponse<LogMetadataResult>> {
-    const res = await fetch('/api/logs/metadata');
-    const json = (await res.json()) as ApiResponse<LogMetadataResult>;
+    const res = await fetchApi('/api/logs/metadata');
+    const json = await parseResponseJson<LogMetadataResult>(res, '/api/logs/metadata');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch log metadata`);
     }
@@ -309,12 +346,12 @@ export const api = {
    * Executes the 6-rule Detection Engine against stored database logs
    */
   async runDetection(limit = 500): Promise<ApiResponse<DetectionRunResult>> {
-    const res = await fetch('/api/detection/run', {
+    const res = await fetchApi('/api/detection/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ limit }),
     });
-    const json = (await res.json()) as ApiResponse<DetectionRunResult>;
+    const json = await parseResponseJson<DetectionRunResult>(res, '/api/detection/run');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Detection engine execution failed`);
     }
@@ -334,8 +371,8 @@ export const api = {
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
 
-    const res = await fetch(`/api/alerts?${query.toString()}`);
-    const json = (await res.json()) as ApiResponse<DbAlert[]>;
+    const res = await fetchApi(`/api/alerts?${query.toString()}`);
+    const json = await parseResponseJson<DbAlert[]>(res, '/api/alerts');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch alerts`);
     }
@@ -346,8 +383,8 @@ export const api = {
    * Retrieves a single security alert with its hydrated supporting log events
    */
   async getAlertById(id: string): Promise<ApiResponse<DbAlert>> {
-    const res = await fetch(`/api/alerts/${id}`);
-    const json = (await res.json()) as ApiResponse<DbAlert>;
+    const res = await fetchApi(`/api/alerts/${id}`);
+    const json = await parseResponseJson<DbAlert>(res, `/api/alerts/${id}`);
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch alert details`);
     }
@@ -358,12 +395,12 @@ export const api = {
    * Updates an alert triage status (open, investigating, resolved, false_positive)
    */
   async updateAlertStatus(id: string, status: string): Promise<ApiResponse<DbAlert>> {
-    const res = await fetch(`/api/alerts/${id}/status`, {
+    const res = await fetchApi(`/api/alerts/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    const json = (await res.json()) as ApiResponse<DbAlert>;
+    const json = await parseResponseJson<DbAlert>(res, `/api/alerts/${id}/status`);
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to update alert status`);
     }
@@ -374,8 +411,8 @@ export const api = {
    * Retrieves registered detection rules
    */
   async getDetectionRules(): Promise<ApiResponse<DetectionRuleInfo[]>> {
-    const res = await fetch('/api/detection/rules');
-    const json = (await res.json()) as ApiResponse<DetectionRuleInfo[]>;
+    const res = await fetchApi('/api/detection/rules');
+    const json = await parseResponseJson<DetectionRuleInfo[]>(res, '/api/detection/rules');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch detection rules`);
     }
@@ -386,8 +423,8 @@ export const api = {
    * Health check endpoint
    */
   async checkHealth(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    const res = await fetch('/api/health');
-    const json = (await res.json()) as ApiResponse<{ status: string; timestamp: string }>;
+    const res = await fetchApi('/api/health');
+    const json = await parseResponseJson<{ status: string; timestamp: string }>(res, '/api/health');
     return json;
   },
 
@@ -395,11 +432,11 @@ export const api = {
    * Triggers the Incident Correlation Engine to cluster alerts into multi-stage incidents
    */
   async correlateIncidents(): Promise<ApiResponse<IncidentCorrelateResult>> {
-    const res = await fetch('/api/incidents/correlate', {
+    const res = await fetchApi('/api/incidents/correlate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
-    const json = (await res.json()) as ApiResponse<IncidentCorrelateResult>;
+    const json = await parseResponseJson<IncidentCorrelateResult>(res, '/api/incidents/correlate');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Incident correlation failed`);
     }
@@ -417,8 +454,8 @@ export const api = {
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
 
-    const res = await fetch(`/api/incidents?${query.toString()}`);
-    const json = (await res.json()) as ApiResponse<DbIncident[]>;
+    const res = await fetchApi(`/api/incidents?${query.toString()}`);
+    const json = await parseResponseJson<DbIncident[]>(res, '/api/incidents');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch incidents`);
     }
@@ -429,8 +466,8 @@ export const api = {
    * Fetches single incident with full details (hydrated alerts & chronological kill-chain timeline)
    */
   async getIncidentById(id: string): Promise<ApiResponse<DbIncidentWithDetails>> {
-    const res = await fetch(`/api/incidents/${id}`);
-    const json = (await res.json()) as ApiResponse<DbIncidentWithDetails>;
+    const res = await fetchApi(`/api/incidents/${id}`);
+    const json = await parseResponseJson<DbIncidentWithDetails>(res, `/api/incidents/${id}`);
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch incident details`);
     }
@@ -441,12 +478,12 @@ export const api = {
    * Updates an incident triage status (open, investigating, mitigated, resolved, closed)
    */
   async updateIncidentStatus(id: string, status: string): Promise<ApiResponse<DbIncident>> {
-    const res = await fetch(`/api/incidents/${id}/status`, {
+    const res = await fetchApi(`/api/incidents/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    const json = (await res.json()) as ApiResponse<DbIncident>;
+    const json = await parseResponseJson<DbIncident>(res, `/api/incidents/${id}/status`);
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to update incident status`);
     }
@@ -457,8 +494,8 @@ export const api = {
    * Retrieves high-level SOC overview metrics, trends, and recent telemetry
    */
   async getOverviewMetrics(): Promise<ApiResponse<OverviewMetricsData>> {
-    const res = await fetch('/api/analytics/overview');
-    const json = (await res.json()) as ApiResponse<OverviewMetricsData>;
+    const res = await fetchApi('/api/analytics/overview');
+    const json = await parseResponseJson<OverviewMetricsData>(res, '/api/analytics/overview');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch overview metrics`);
     }
@@ -469,8 +506,8 @@ export const api = {
    * Retrieves deep risk analytics (rule frequencies, top IPs, targeted endpoints)
    */
   async getRiskAnalytics(): Promise<ApiResponse<RiskAnalyticsResult>> {
-    const res = await fetch('/api/analytics/risk');
-    const json = (await res.json()) as ApiResponse<RiskAnalyticsResult>;
+    const res = await fetchApi('/api/analytics/risk');
+    const json = await parseResponseJson<RiskAnalyticsResult>(res, '/api/analytics/risk');
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch risk analytics`);
     }
@@ -481,8 +518,8 @@ export const api = {
    * Retrieves security audit report summary for selected period
    */
   async getReportSummary(period = '24h'): Promise<ApiResponse<ReportSummaryResult>> {
-    const res = await fetch(`/api/reports/summary?period=${period}`);
-    const json = (await res.json()) as ApiResponse<ReportSummaryResult>;
+    const res = await fetchApi(`/api/reports/summary?period=${period}`);
+    const json = await parseResponseJson<ReportSummaryResult>(res, `/api/reports/summary?period=${period}`);
     if (!res.ok) {
       throw new Error(json.error?.message || `HTTP ${res.status}: Failed to fetch report summary`);
     }
@@ -493,7 +530,7 @@ export const api = {
    * Exports raw security logs to CSV format URL
    */
   getReportExportUrl(period = '24h'): string {
-    return `/api/reports/export?period=${period}`;
+    return `${API_BASE}/api/reports/export?period=${period}`;
   },
 };
 

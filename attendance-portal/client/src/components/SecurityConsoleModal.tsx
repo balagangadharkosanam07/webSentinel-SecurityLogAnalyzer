@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { portalApi } from '../services/api.js';
+import { portalApi, WEBSENTINEL_SOC_URL } from '../services/api.js';
 import {
   ShieldAlert,
   Zap,
@@ -248,7 +248,7 @@ export const SecurityConsoleModal: React.FC<SecurityConsoleModalProps> = ({ isOp
           </p>
 
           <a
-            href="http://localhost:3000"
+            href={WEBSENTINEL_SOC_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all"

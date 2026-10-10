@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from '../types/index.js';
+import { WEBSENTINEL_SOC_URL } from '../services/api.js';
 import { GraduationCap, Shield, LogOut, ExternalLink, Zap, UserCheck, BookOpen, Users } from 'lucide-react';
 
 interface NavbarProps {
@@ -119,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Jump to WebSentinel SOC */}
             <a
-              href="http://localhost:3000"
+              href={WEBSENTINEL_SOC_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"

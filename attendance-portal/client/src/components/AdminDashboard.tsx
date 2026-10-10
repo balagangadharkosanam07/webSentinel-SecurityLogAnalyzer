@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { portalApi } from '../services/api.js';
+import { portalApi, WEBSENTINEL_SOC_URL } from '../services/api.js';
 import { User, AuditLogEvent } from '../types/index.js';
 import { ShieldCheck, Users, Activity, RefreshCw, KeyRound, ExternalLink } from 'lucide-react';
 
@@ -52,7 +52,7 @@ export const AdminDashboard: React.FC = () => {
               Refresh Feeds
             </button>
             <a
-              href="http://localhost:3000"
+              href={WEBSENTINEL_SOC_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-900 rounded-lg text-xs font-bold transition-all shadow-md"

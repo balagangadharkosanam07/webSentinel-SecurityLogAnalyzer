@@ -75,7 +75,7 @@ export const Topbar: React.FC<TopbarProps> = ({ sidebarCollapsed }) => {
             <User className="w-4 h-4" />
           </div>
           <div className="hidden xl:flex flex-col text-left">
-            <span className="text-xs font-semibold text-slate-200 leading-tight">Analyst Haris</span>
+            <span className="text-xs font-semibold text-slate-200 leading-tight">Analyst Balu</span>
             <span className="text-[10px] font-mono text-slate-400 leading-tight">SOC-L2 Incident Lead</span>
           </div>
         </div>

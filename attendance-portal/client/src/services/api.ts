@@ -25,6 +25,16 @@ export const authStorage = {
   },
 };
 
+function getApiBase(): string {
+  const envBase = ((import.meta as any).env?.VITE_API_URL || '').trim();
+  return envBase.replace(/\/$/, '');
+}
+
+export const API_BASE = getApiBase();
+
+export const WEBSENTINEL_SOC_URL =
+  (import.meta as any).env?.VITE_WEBSENTINEL_URL || 'http://localhost:3000';
+
 async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = authStorage.getToken();
   const headers = new Headers(options.headers || {});
@@ -37,12 +47,30 @@ async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): P
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(endpoint, {
-    ...options,
-    headers,
-  });
+  const fullUrl = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new Error(
+      `Failed to connect to backend server at ${fullUrl}. Please check your connection or wait 30 seconds if the free server is waking up.`
+    );
+  }
 
-  const data = await response.json().catch(() => null);
+  const text = await response.text();
+  let data: any = null;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (text.includes('<!doctype html>') || text.includes('<html')) {
+      throw new Error(
+        `Backend server at '${fullUrl}' returned HTML instead of JSON (Status ${response.status}). The service may still be waking up from sleep; please retry in 30 seconds.`
+      );
+    }
+  }
 
   if (!response.ok) {
     const errorMsg = data?.error?.message || `Request failed with status ${response.status}`;
@@ -52,7 +80,11 @@ async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): P
     throw error;
   }
 
-  return data.data;
+  if (!data) {
+    throw new Error(`Invalid response received from server (${response.status})`);
+  }
+
+  return (data.data !== undefined ? data.data : data) as T;
 }
 
 export const portalApi = {
@@ -144,7 +176,7 @@ export const portalApi = {
     switch (type) {
       case 'sqli': {
         // Trigger SQLi probe on search
-        const rawRes = await fetch("/api/courses/search?q=' OR '1'='1 -- UNION SELECT NULL, NULL, NULL");
+        const rawRes = await fetch(`${API_BASE}/api/courses/search?q=' OR '1'='1 -- UNION SELECT NULL, NULL, NULL`);
         return {
           attack: 'SQL Injection Probe',
           status: rawRes.status,
@@ -154,7 +186,7 @@ export const portalApi = {
       }
       case 'scanner': {
         // Trigger reconnaissance on sensitive file paths
-        const rawRes = await fetch('/.env');
+        const rawRes = await fetch(`${API_BASE}/.env`);
         return {
           attack: 'Reconnaissance Probe',
           status: rawRes.status,
@@ -166,7 +198,7 @@ export const portalApi = {
         // Rapid 5 failed logins
         const results = [];
         for (let i = 1; i <= 5; i++) {
-          const res = await fetch('/api/auth/login', {
+          const res = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -185,7 +217,7 @@ export const portalApi = {
       }
       case 'privilege': {
         // Request restricted admin endpoints without admin authorization
-        const res = await fetch('/api/admin/audit-logs', {
+        const res = await fetch(`${API_BASE}/api/admin/audit-logs`, {
           headers: {
             Authorization: `Bearer ${authStorage.getToken() || 'invalid_token'}`,
           },
@@ -199,7 +231,7 @@ export const portalApi = {
       }
       case 'tampering': {
         // Send bulk modify to attendance records
-        const res = await fetch('/api/attendance/bulk-update', {
+        const res = await fetch(`${API_BASE}/api/attendance/bulk-update`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

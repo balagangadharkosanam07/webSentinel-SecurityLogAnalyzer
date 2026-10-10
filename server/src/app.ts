@@ -15,9 +15,9 @@ export function createApp(): Express {
   // 2. Cross-Origin Resource Sharing
   app.use(
     cors({
-      origin: env.CLIENT_URL,
+      origin: env.CLIENT_URL === '*' ? true : env.CLIENT_URL,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-API-Key'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-API-Key', 'X-WebSentinel-Key'],
       credentials: true,
     })
   );

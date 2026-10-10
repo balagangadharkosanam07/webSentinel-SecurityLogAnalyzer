@@ -23,7 +23,7 @@ async function runSimulation() {
   // Verify health of both backends
   console.log('🔍 Checking target application and SOC platform status...');
   try {
-    const portalHealth = await fetch(`${PORTAL_URL}/api/health`).then((r) => r.json());
+    const portalHealth = (await fetch(`${PORTAL_URL}/api/health`).then((r) => r.json())) as any;
     console.log(`✅ Attendance Portal API is ONLINE: ${portalHealth.service} (${portalHealth.environment})`);
   } catch (err: any) {
     console.warn(`⚠️ Attendance Portal API not reachable on ${PORTAL_URL}: ${err.message}`);
@@ -31,7 +31,7 @@ async function runSimulation() {
   }
 
   try {
-    const socHealth = await fetch(`${WEBSENTINEL_URL}/api/health`).then((r) => r.json());
+    const socHealth = (await fetch(`${WEBSENTINEL_URL}/api/health`).then((r) => r.json())) as any;
     console.log(`✅ WebSentinel SOC Platform is ONLINE: ${socHealth.service} (${socHealth.environment})`);
   } catch (err: any) {
     console.warn(`⚠️ WebSentinel API not reachable on ${WEBSENTINEL_URL}: ${err.message}`);
@@ -141,20 +141,20 @@ async function runSimulation() {
   try {
     const detectRes = await fetch(`${WEBSENTINEL_URL}/api/detection/run`, { method: 'POST' });
     if (detectRes.ok) {
-      const detectData = await detectRes.json();
-      console.log(`⚡ Detection Engine Run Completed: Generated ${detectData.data?.alertsGenerated || 0} Alerts`);
+      const detectData = (await detectRes.json()) as any;
+      console.log(`⚡ Detection Engine Run Completed: Generated ${detectData?.data?.alertsGenerated || 0} Alerts`);
     }
 
     const corrRes = await fetch(`${WEBSENTINEL_URL}/api/incidents/correlate`, { method: 'POST' });
     if (corrRes.ok) {
-      const corrData = await corrRes.json();
-      console.log(`🛡️ Incident Correlation Completed: Created ${corrData.data?.incidentsCreated || 0} Incidents`);
+      const corrData = (await corrRes.json()) as any;
+      console.log(`🛡️ Incident Correlation Completed: Created ${corrData?.data?.incidentsCreated || 0} Incidents`);
     }
 
     const incidentsRes = await fetch(`${WEBSENTINEL_URL}/api/incidents?limit=5`);
     if (incidentsRes.ok) {
-      const incidentData = await incidentsRes.json();
-      const topIncidents = incidentData.data?.incidents || [];
+      const incidentData = (await incidentsRes.json()) as any;
+      const topIncidents = incidentData?.data?.incidents || [];
       console.log('\n📊 Correlated Security Incidents in SOC:');
       for (const inc of topIncidents) {
         console.log(`   • [${inc.id}] [${inc.severity.toUpperCase()}] Risk: ${inc.riskScore}/100 - ${inc.title}`);
